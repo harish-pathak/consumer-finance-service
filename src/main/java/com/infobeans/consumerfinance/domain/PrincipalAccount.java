@@ -13,25 +13,30 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Principal Account Entity
+ * PrincipalAccount entity representing a principal account linked to a consumer.
  *
- * Represents the primary account for a consumer.
- * Constraint: Exactly ONE principal account per consumer (unique on consumer_id).
- * Auto-created post-consumer onboarding.
+ * Each consumer can have exactly one principal account (enforced via unique constraint).
+ * The principal account serves as the main account holder record for financial operations.
  *
- * Database Table: principal_accounts
+ * Uniqueness is enforced on consumer_id to ensure one principal account per consumer.
+ * Referential integrity is enforced via foreign key constraint to consumers table.
  *
- * @author Harish Pathak
- * @since 1.0.0
+ * @author Consumer Finance Service
+ * @version 1.0
  */
 @Entity
 @Table(
     name = "principal_accounts",
     indexes = {
-        @Index(name = "idx_principal_status", columnList = "status")
+        @Index(name = "idx_consumer_id", columnList = "consumer_id", unique = true),
+        @Index(name = "idx_status", columnList = "status"),
+        @Index(name = "idx_created_at", columnList = "created_at")
     },
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_consumer", columnNames = "consumer_id")
+        @UniqueConstraint(
+            name = "uk_principal_account_consumer_id",
+            columnNames = {"consumer_id"}
+        )
     }
 )
 @Data
@@ -40,64 +45,88 @@ import java.util.UUID;
 @Builder
 public class PrincipalAccount {
 
+    /**
+     * Unique principal account identifier (UUID string).
+     */
     @Id
-    @Column(columnDefinition = "VARCHAR(36)")
-    private UUID id;
-
-    @Column(name = "consumer_id", nullable = false, columnDefinition = "VARCHAR(36)")
-    private UUID consumerId;
+    @Column(name = "id", columnDefinition = "VARCHAR(36)", length = 36)
+    private String id;
 
     /**
-     * Account Type
-     * Examples: DEFAULT, PREMIUM, etc.
+     * Reference to the consumer this principal account belongs to (foreign key).
+     * Unique constraint enforces one principal account per consumer.
      */
-    @Column(name = "account_type", length = 50)
-    private String accountType;
+    @Column(name = "consumer_id", nullable = false, columnDefinition = "VARCHAR(36)", length = 36)
+    private String consumerId;
 
-    @Column(name = "status", nullable = false, length = 20)
+    /**
+     * Type of principal account (e.g., PRIMARY, SECONDARY).
+     */
+    @Column(name = "account_type", length = 50, columnDefinition = "VARCHAR(50)")
+    @Builder.Default
+    private String accountType = "PRIMARY";
+
+    /**
+     * Status of the principal account (ACTIVE, INACTIVE, ARCHIVED, SUSPENDED).
+     */
+    @Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
-    private AccountStatus status;
+    @Builder.Default
+    private AccountStatus status = AccountStatus.ACTIVE;
 
+    /**
+     * Timestamp when the principal account was created.
+     */
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Timestamp when the principal account was last updated.
+     */
     @LastModifiedDate
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * User or system that created this principal account.
+     */
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    /**
+     * User or system that last updated this principal account.
+     */
+    @Column(name = "updated_by", length = 100)
+    private String updatedBy;
+
+    /**
+     * Lifecycle hook: set id and timestamps before persisting.
+     */
     @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
+    protected void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID().toString();
         }
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
         }
-        if (this.updatedAt == null) {
-            this.updatedAt = LocalDateTime.now();
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
         }
-        if (this.status == null) {
-            this.status = AccountStatus.ACTIVE;
+        if (status == null) {
+            status = AccountStatus.ACTIVE;
         }
-        if (this.accountType == null) {
-            this.accountType = "DEFAULT";
+        if (accountType == null) {
+            accountType = "PRIMARY";
         }
     }
 
+    /**
+     * Lifecycle hook: update updatedAt timestamp before updating.
+     */
     @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @Override
-    public String toString() {
-        return "PrincipalAccount{" +
-                "id=" + id +
-                ", consumerId=" + consumerId +
-                ", accountType='" + accountType + '\'' +
-                ", status=" + status +
-                ", createdAt=" + createdAt +
-                '}';
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

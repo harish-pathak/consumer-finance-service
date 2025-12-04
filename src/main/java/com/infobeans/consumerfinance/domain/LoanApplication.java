@@ -30,7 +30,8 @@ import java.util.UUID;
     indexes = {
         @Index(name = "idx_app_consumer", columnList = "consumer_id"),
         @Index(name = "idx_app_status", columnList = "status"),
-        @Index(name = "idx_app_created_at", columnList = "created_at")
+        @Index(name = "idx_app_created_at", columnList = "created_at"),
+        @Index(name = "idx_app_consumer_status", columnList = "consumer_id, status")
     }
 )
 @Data
@@ -40,11 +41,11 @@ import java.util.UUID;
 public class LoanApplication {
 
     @Id
-    @Column(columnDefinition = "VARCHAR(36)")
-    private UUID id;
+    @Column(name = "id", columnDefinition = "VARCHAR(36)", length = 36)
+    private String id;
 
-    @Column(name = "consumer_id", nullable = false, columnDefinition = "VARCHAR(36)")
-    private UUID consumerId;
+    @Column(name = "consumer_id", nullable = false, columnDefinition = "VARCHAR(36)", length = 36)
+    private String consumerId;
 
     @Column(name = "status", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
@@ -70,7 +71,7 @@ public class LoanApplication {
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
-            this.id = UUID.randomUUID();
+            this.id = UUID.randomUUID().toString();
         }
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();

@@ -2,6 +2,14 @@ spring:
   application:
     name: consumer-finance-service
 
+  security:
+    jwt:
+      secret: ${JWT_SECRET:your-super-secret-key-change-in-production-minimum-256-bits-long-for-security}
+      expiration: ${JWT_EXPIRATION:3600000}  # 1 hour in milliseconds
+    user:
+      username: ${APP_USER:admin}
+      password: ${APP_PASSWORD:admin123}
+
   datasource:
     url: jdbc:mysql://localhost:3306/consumer_finance?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
@@ -13,12 +21,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
 
 server:
   port: 8080
@@ -26,4 +39,4 @@ server:
 logging:
   level:
     root: INFO
-    com.example.consumerfinance: DEBUG
+    com.infobeans.consumerfinance: DEBUG

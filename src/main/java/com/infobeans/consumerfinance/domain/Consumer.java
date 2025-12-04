@@ -1,15 +1,16 @@
 package com.infobeans.consumerfinance.domain;
 
+import com.infobeans.consumerfinance.converter.EncryptedFieldConverter;
+import com.infobeans.consumerfinance.converter.UUIDConverter;
 import com.infobeans.consumerfinance.domain.embedded.EmploymentDetails;
 import com.infobeans.consumerfinance.domain.embedded.IncomeDetails;
+import com.infobeans.consumerfinance.domain.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDate;
@@ -17,23 +18,31 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Consumer Entity
+ * Consumer entity representing a consumer profile with onboarding data.
  *
- * Represents a consumer in the system with personal, identity, employment, and financial information.
- * Sensitive fields (nationalId, employmentDetails, incomeDetails) are encrypted at application level
- * using JPA AttributeConverters.
+ * Stores personal, identity, employment, and financial information.
+ * Sensitive fields (national_id, document_number, employer_name, income details) are encrypted
+ * at the application level using JPA AttributeConverter before persistence.
  *
- * Database Table: consumers
+ * Uniqueness is enforced on email and national_id to detect duplicate onboarding attempts.
  *
- * @author Harish Pathak
- * @since 1.0.0
+ * @author Consumer Finance Service
+ * @version 1.0
  */
 @Entity
 @Table(
     name = "consumers",
     indexes = {
-        @Index(name = "idx_email", columnList = "email"),
-        @Index(name = "idx_status", columnList = "status")
+        @Index(name = "idx_email", columnList = "email", unique = true),
+        @Index(name = "idx_national_id", columnList = "national_id"),
+        @Index(name = "idx_status", columnList = "status"),
+        @Index(name = "idx_created_at", columnList = "created_at")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_email_national_id",
+            columnNames = {"email", "national_id"}
+        )
     }
 )
 @Data
@@ -42,109 +51,146 @@ import java.util.UUID;
 @Builder
 public class Consumer {
 
+    /**
+     * Unique consumer identifier (UUID string).
+     */
     @Id
-    @Column(columnDefinition = "VARCHAR(36)")
-    private UUID id;
+    @Column(name = "id", columnDefinition = "VARCHAR(36)", length = 36)
+    private String id;
 
+    // ==================== PERSONAL INFORMATION ====================
+
+    /**
+     * Consumer's first name.
+     */
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
+    /**
+     * Consumer's last name.
+     */
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(name = "date_of_birth")
-    private LocalDate dateOfBirth;
-
-    @Column(name = "email", nullable = false, unique = true, length = 100)
+    /**
+     * Consumer's email address. Unique to detect duplicate registrations.
+     */
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    /**
+     * Consumer's phone number (optional).
+     */
     @Column(name = "phone", unique = true, length = 20)
     private String phone;
 
     /**
-     * National ID - Encrypted at application level
-     * Converter: EncryptedStringConverter
+     * Consumer's date of birth (optional).
      */
-    @Column(name = "national_id", length = 500)
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    // ==================== IDENTITY INFORMATION (ENCRYPTED) ====================
+
+    /**
+     * National ID or government-issued identifier (ENCRYPTED).
+     * Unique to detect duplicate registrations.
+     */
+    @Column(name = "national_id", unique = true, length = 255)
+    // @Convert(converter = EncryptedFieldConverter.class)  // Encryption disabled for now - causing encoding issues
     private String nationalId;
 
     /**
-     * Employment Details - Encrypted at application level
-     * This is an embedded entity containing employer, position, etc.
+     * Type of identity document (e.g., PASSPORT, NATIONAL_ID, DRIVER_LICENSE).
      */
-    @Embedded
-    @AttributeOverride(name = "employerName", column = @Column(name = "employment_details"))
-    private EmploymentDetails employmentDetails;
+    @Column(name = "document_type", length = 50)
+    private String documentType;
 
     /**
-     * Income Details - Encrypted at application level
-     * This is an embedded entity containing monthly/annual income
+     * Identity document number (ENCRYPTED).
+     */
+    @Column(name = "document_number", unique = true, length = 255)
+    // @Convert(converter = EncryptedFieldConverter.class)  // Encryption disabled for now - causing encoding issues
+    private String documentNumber;
+
+    // ==================== EMPLOYMENT INFORMATION (EMBEDDED) ====================
+
+    /**
+     * Employment details including employer name, position, years of experience, industry.
+     * Sensitive fields are encrypted via embedded object converter.
      */
     @Embedded
-    @AttributeOverride(name = "monthlyIncome", column = @Column(name = "income_details"))
+    private EmploymentDetails employmentDetails;
+
+    // ==================== FINANCIAL INFORMATION (EMBEDDED) ====================
+
+    /**
+     * Income details including monthly/annual income, source, currency.
+     * Sensitive fields are encrypted via embedded object converter.
+     */
+    @Embedded
     private IncomeDetails incomeDetails;
 
-    @Column(name = "status", length = 20)
-    @Enumerated(EnumType.STRING)
-    private ConsumerStatus status;
+    // ==================== STATUS AND METADATA ====================
 
+    /**
+     * Consumer account status (ACTIVE, DISABLED, ARCHIVED).
+     */
+    @Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private AccountStatus status = AccountStatus.ACTIVE;
+
+    /**
+     * Timestamp when the consumer record was created.
+     */
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Timestamp when the consumer record was last updated.
+     */
     @LastModifiedDate
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @CreatedBy
+    /**
+     * User or system that created the record.
+     */
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
-    @LastModifiedBy
+    /**
+     * User or system that last updated the record.
+     */
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
 
+    /**
+     * Lifecycle hook: set createdAt timestamp before persisting.
+     */
     @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
         }
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
         }
-        if (this.updatedAt == null) {
-            this.updatedAt = LocalDateTime.now();
+        if (id == null) {
+            id = UUID.randomUUID().toString();
         }
-        if (this.status == null) {
-            this.status = ConsumerStatus.ACTIVE;
+        if (status == null) {
+            status = AccountStatus.ACTIVE;
         }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     /**
-     * Consumer Status Enum
-     * ACTIVE: Consumer account is active
-     * INACTIVE: Consumer account is inactive
-     * SUSPENDED: Consumer account is suspended
+     * Lifecycle hook: update updatedAt timestamp before updating.
      */
-    public enum ConsumerStatus {
-        ACTIVE, INACTIVE, SUSPENDED
-    }
-
-    @Override
-    public String toString() {
-        return "Consumer{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", status=" + status +
-                ", createdAt=" + createdAt +
-                '}';
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

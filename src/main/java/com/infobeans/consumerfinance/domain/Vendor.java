@@ -10,7 +10,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * Vendor Entity
@@ -37,8 +36,8 @@ import java.util.UUID;
 public class Vendor {
 
     @Id
-    @Column(columnDefinition = "VARCHAR(36)")
-    private UUID id;
+    @Column(name = "id", columnDefinition = "VARCHAR(36)", length = 36)
+    private String id;
 
     @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
@@ -58,7 +57,7 @@ public class Vendor {
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
-            this.id = UUID.randomUUID();
+            this.id = java.util.UUID.randomUUID().toString();
         }
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();

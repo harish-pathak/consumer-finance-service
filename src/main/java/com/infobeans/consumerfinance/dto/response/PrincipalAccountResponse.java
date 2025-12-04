@@ -8,10 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * DTO for PrincipalAccount response.
+ *
+ * Represents the API response for principal account operations.
+ * ID fields are returned as strings (UUID format) for consistency with the entity model.
  *
  * @author Consumer Finance Service
  * @version 1.0
@@ -22,8 +24,15 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PrincipalAccountResponse {
 
-    private UUID id;
-    private UUID consumerId;
+    /**
+     * Principal account ID (UUID as string).
+     */
+    private String id;
+
+    /**
+     * Consumer ID this principal account belongs to (UUID as string).
+     */
+    private String consumerId;
     private String accountType;
     private AccountStatus status;
 

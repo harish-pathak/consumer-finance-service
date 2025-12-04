@@ -1,78 +1,52 @@
 package com.infobeans.consumerfinance.controller;
 
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Test API Controller
- * 
- * Simple endpoints to verify the application is running correctly.
- * No authentication required.
+ * Test Controller for development and testing purposes.
+ * Provides utility endpoints for testing the API.
+ *
+ * @author Consumer Finance Service
+ * @version 1.0
  */
 @RestController
 @RequestMapping("/api/v1/test")
+@Slf4j
 public class TestController {
 
     /**
-     * Simple ping endpoint
-     * GET /api/v1/test/ping
-     */
-    @GetMapping("/ping")
-    public ResponseEntity<Map<String, Object>> ping() {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("message", "Pong!");
-        response.put("timestamp", LocalDateTime.now());
-        response.put("service", "Consumer Finance Service");
-        response.put("status", "RUNNING");
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Echo endpoint - returns the input message
-     * POST /api/v1/test/echo
-     */
-    @PostMapping("/echo")
-    public ResponseEntity<Map<String, Object>> echo(@RequestBody Map<String, String> request) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        String message = request.getOrDefault("message", "No message provided");
-        response.put("echo", message);
-        response.put("timestamp", LocalDateTime.now());
-        response.put("received", true);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Info endpoint - returns service information
-     * GET /api/v1/test/info
+     * Get test information for API testing.
      */
     @GetMapping("/info")
-    public ResponseEntity<Map<String, Object>> info() {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("serviceName", "Consumer Finance Service");
-        response.put("version", "1.0.0");
-        response.put("environment", "Development");
-        response.put("apiVersion", "v1");
-        response.put("timestamp", LocalDateTime.now());
-        response.put("baseUrl", "/api/v1");
-        response.put("description", "Spring Boot microservice for consumer lending operations");
+    public ResponseEntity<Map<String, Object>> getTestInfo() {
+        log.info("Test info requested");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "For testing POST /api/v1/consumers");
+        response.put("note", "Configure OAuth2 issuer URI for real JWT validation");
+        response.put("test_endpoint", "/api/v1/consumers");
+        response.put("method", "POST");
+        response.put("auth_required", "Yes - JWT Bearer token");
+
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Ready endpoint - indicates application is ready to serve requests
-     * GET /api/v1/test/ready
+     * Health check endpoint for testing.
      */
-    @GetMapping("/ready")
-    public ResponseEntity<Map<String, Object>> ready() {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("ready", true);
-        response.put("message", "Application is ready to accept requests");
-        response.put("timestamp", LocalDateTime.now());
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+    @GetMapping("/ping")
+    public ResponseEntity<Map<String, String>> ping() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "pong");
+        response.put("message", "Test endpoint is working");
+        return ResponseEntity.ok(response);
     }
 }

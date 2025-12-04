@@ -1,6 +1,6 @@
 package com.infobeans.consumerfinance.dto.response;
 
-import com.infobeans.consumerfinance.domain.Consumer;
+import com.infobeans.consumerfinance.domain.enums.AccountStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,7 +46,7 @@ public class ConsumerResponse {
     private BigDecimal monthlyIncome;
     private BigDecimal annualIncome;
 
-    private Consumer.ConsumerStatus status;
+    private AccountStatus status;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

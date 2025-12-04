@@ -2,6 +2,7 @@ package com.infobeans.consumerfinance.domain.embedded;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class IncomeDetails {
 
     private BigDecimal monthlyIncome;
