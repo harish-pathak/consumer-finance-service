@@ -25,7 +25,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *   - GET /actuator/health (basic health check)
  *
  * - Protected endpoints (require valid JWT Bearer token):
- *   - POST /api/v1/consumers (consumer onboarding) - REQUIRES JWT
+ *   - POST /api/v1/consumers/** (consumer onboarding)
+ *   - GET /api/v1/loan-applications/** (view applications)
+ *   - POST /api/v1/loan-applications (create applications)
+ *   - GET /api/v1/loan-applications/{id}/status (check status)
+ *   - POST /api/v1/loan-applications/{id}/decisions (approve/reject - staff only)
  *   - All other API endpoints not explicitly whitelisted
  *
  * Token Validation:
@@ -34,8 +38,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *
  * Invalid, missing, or expired tokens return 401 Unauthorized.
  *
+ * Staff Authorization:
+ * - Decision endpoints require staff authorization (checked at controller/service level)
+ * - Extracted from JWT authentication principal
+ *
  * @author Consumer Finance Service
- * @version 3.0
+ * @version 4.0
  */
 @Configuration
 @EnableWebSecurity

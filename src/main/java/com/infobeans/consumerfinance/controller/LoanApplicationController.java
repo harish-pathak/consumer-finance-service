@@ -1,9 +1,12 @@
 package com.infobeans.consumerfinance.controller;
 
 import com.infobeans.consumerfinance.dto.request.CreateLoanApplicationRequest;
+import com.infobeans.consumerfinance.dto.request.SubmitLoanDecisionRequest;
 import com.infobeans.consumerfinance.dto.response.ApiResponse;
 import com.infobeans.consumerfinance.dto.response.LoanApplicationResponse;
+import com.infobeans.consumerfinance.dto.response.LoanDecisionResponse;
 import com.infobeans.consumerfinance.service.LoanApplicationService;
+import com.infobeans.consumerfinance.service.LoanDecisionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,24 +18,29 @@ import org.springframework.web.bind.annotation.*;
 /**
  * REST Controller for loan application endpoints.
  *
- * Provides secure endpoints for creating and retrieving loan applications.
+ * Provides secure endpoints for creating, retrieving, and deciding on loan applications.
  * All endpoints are authenticated via OAuth2/JWT tokens.
  *
  * Base URI: /api/v1/loan-applications
  *
  * Endpoints:
- * - POST /api/v1/loan-applications - Create loan application (authenticated consumer)
+ * - POST /api/v1/loan-applications - Create loan application (authenticated user)
  * - GET /api/v1/loan-applications/{applicationId} - Retrieve loan application details
+ * - GET /api/v1/loan-applications/{applicationId}/status - Get application status (authenticated)
+ * - POST /api/v1/loan-applications/{applicationId}/decisions - Submit decision (staff only)
  *
  * Key Features:
  * - Duplicate detection: prevents multiple PENDING applications per consumer
  * - Idempotent error handling: consistent 409 responses for duplicates
- * - Automatic consumer ID extraction from JWT authentication context
+ * - Atomic state transitions: status and decision persist together
+ * - Audit trail: decisions recorded with staff ID, timestamp, and reason
+ * - Event-driven: publishes LoanApplicationApprovedEvent for downstream processing
+ * - Staff authorization: decision endpoints require staff role/claims
  * - JSR-380 Bean Validation on request DTOs
  * - Global exception handling with standard error responses
  *
  * @author Consumer Finance Service
- * @version 1.0
+ * @version 2.0
  */
 @RestController
 @RequestMapping("/api/v1/loan-applications")
@@ -41,6 +49,7 @@ import org.springframework.web.bind.annotation.*;
 public class LoanApplicationController {
 
     private final LoanApplicationService loanApplicationService;
+    private final LoanDecisionService loanDecisionService;
 
     /**
      * POST /api/v1/loan-applications - Create a new loan application.
@@ -192,6 +201,158 @@ public class LoanApplicationController {
             .body(ApiResponse.<LoanApplicationResponse>builder()
                 .success(true)
                 .message("Loan application retrieved successfully")
+                .data(response)
+                .build()
+            );
+    }
+
+    /**
+     * GET /api/v1/loan-applications/{applicationId}/status - Retrieve application status.
+     *
+     * Returns the current status of a loan application.
+     * Useful for checking if application is ready for decision.
+     *
+     * Authentication:
+     * Requires valid OAuth2/JWT token. Missing or invalid token returns 401 Unauthorized.
+     *
+     * Success response (HTTP 200 OK):
+     * {
+     *   "success": true,
+     *   "message": "Loan application status retrieved successfully",
+     *   "data": {
+     *     "id": "550e8400-e29b-41d4-a716-446655441000",
+     *     "consumerId": "550e8400-e29b-41d4-a716-446655440000",
+     *     "status": "PENDING",
+     *     "requestedAmount": 50000.00,
+     *     "termInMonths": 60,
+     *     "purpose": "Home renovation",
+     *     "createdAt": "2024-12-04T10:30:00",
+     *     "updatedAt": "2024-12-04T10:30:00"
+     *   },
+     *   "timestamp": "2024-12-05T14:30:00"
+     * }
+     *
+     * Error responses:
+     * - 401 Unauthorized: Missing or invalid OAuth2/JWT token
+     * - 404 Not Found: Application does not exist
+     * - 500 Internal Server Error: Unexpected server error
+     *
+     * @param applicationId the loan application ID (path variable, UUID format)
+     * @param authentication the authenticated principal from JWT token
+     * @return ResponseEntity with 200 OK status and LoanApplicationResponse
+     */
+    @GetMapping("/{applicationId}/status")
+    public ResponseEntity<ApiResponse<LoanApplicationResponse>> getApplicationStatus(
+        @PathVariable String applicationId,
+        Authentication authentication
+    ) {
+        log.info("Received request to get status for loan application: {}", applicationId);
+
+        LoanApplicationResponse response = loanDecisionService.getApplicationStatus(applicationId);
+
+        log.info("Application status retrieved: {} (status: {})", applicationId, response.getStatus());
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.<LoanApplicationResponse>builder()
+                .success(true)
+                .message("Loan application status retrieved successfully")
+                .data(response)
+                .build()
+            );
+    }
+
+    /**
+     * POST /api/v1/loan-applications/{applicationId}/decisions - Submit a decision on a loan application.
+     *
+     * Submits an approval or rejection decision for a PENDING loan application.
+     * Only authorized staff members can submit decisions.
+     *
+     * Design:
+     * - Staff authorization required: checked via JWT claims/roles (Spring Security)
+     * - Staff ID extracted from JWT authentication principal (who made the decision)
+     * - Decision type (APPROVE/REJECT) provided in request body
+     * - Optional reason field for audit trail documentation
+     *
+     * Authorization:
+     * Requires valid OAuth2/JWT token with staff authorization.
+     * Returns:
+     * - 401 Unauthorized: Missing or invalid JWT token
+     * - 403 Forbidden: Authenticated but lacking staff authorization
+     *
+     * Atomicity & Idempotency:
+     * - Application status and decision record update in single transaction
+     * - Duplicate decision attempts return 409 Conflict (not allowed)
+     * - Database unique constraint on (application_id, decision) prevents duplicates
+     *
+     * Event Publishing:
+     * - On approval: LoanApplicationApprovedEvent published for downstream consumers
+     * - On rejection: No event published (internal decision only)
+     *
+     * Request body:
+     * SubmitLoanDecisionRequest with:
+     * - decision (required): APPROVED or REJECTED
+     * - reason (optional): max 500 characters
+     *
+     * Success response (HTTP 200 OK):
+     * {
+     *   "success": true,
+     *   "message": "Decision submitted successfully",
+     *   "data": {
+     *     "id": "550e8400-e29b-41d4-a716-446655442000",
+     *     "applicationId": "550e8400-e29b-41d4-a716-446655441000",
+     *     "decision": "APPROVED",
+     *     "staffId": "loan_officer_001",
+     *     "reason": "Income verified, credit score acceptable, approved for full amount",
+     *     "createdAt": "2024-12-05T14:30:00"
+     *   },
+     *   "timestamp": "2024-12-05T14:30:00"
+     * }
+     *
+     * Error responses:
+     * - 400 Bad Request: Validation errors (missing decision, reason too long, etc.)
+     * - 401 Unauthorized: Missing or invalid JWT token
+     * - 403 Forbidden: Authenticated but not a staff member (missing staff authorization)
+     * - 404 Not Found: Application does not exist
+     * - 409 Conflict: Application not PENDING or duplicate decision exists
+     * - 500 Internal Server Error: Unexpected server error
+     *
+     * Example request:
+     * POST /api/v1/loan-applications/550e8400-e29b-41d4-a716-446655441000/decisions
+     * Content-Type: application/json
+     * Authorization: Bearer <STAFF_JWT_TOKEN>
+     *
+     * {
+     *   "decision": "APPROVED",
+     *   "reason": "Income verified, credit score 750+, approved for full requested amount"
+     * }
+     *
+     * @param applicationId the loan application ID (path variable, UUID format)
+     * @param request SubmitLoanDecisionRequest with decision and optional reason
+     * @param authentication the authenticated principal from JWT token (staff member)
+     * @return ResponseEntity with 200 OK status and LoanDecisionResponse
+     */
+    @PostMapping("/{applicationId}/decisions")
+    public ResponseEntity<ApiResponse<LoanDecisionResponse>> submitDecision(
+        @PathVariable String applicationId,
+        @Valid @RequestBody SubmitLoanDecisionRequest request,
+        Authentication authentication
+    ) {
+        String staffId = authentication.getName();
+
+        log.info("Received decision request for application: {} from staff: {} (decision: {})",
+            applicationId, staffId, request.getDecision());
+
+        LoanDecisionResponse response = loanDecisionService.submitDecision(applicationId, request, staffId);
+
+        log.info("Decision submitted successfully for application: {} (decision: {}, staff: {})",
+            applicationId, response.getDecision(), staffId);
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.<LoanDecisionResponse>builder()
+                .success(true)
+                .message("Decision submitted successfully")
                 .data(response)
                 .build()
             );

@@ -1,0 +1,85 @@
+# ==============================================================================
+# .dockerignore - Exclude files from Docker build context
+# This improves build performance and reduces image size
+# ==============================================================================
+
+# Build artifacts
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+*.swp
+*.swo
+*~
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+CHANGELOG.md
+docs/
+*.txt
+COMMIT_SUMMARY.txt
+APPLICATION_STARTUP_SUCCESS.md
+API_TEST_RESULTS.md
+CONSUMER_ONBOARDING_IMPLEMENTATION.md
+CONVERSATION_SUMMARY.md
+PRODUCTION_REFACTORING.md
+PROJECT_SETUP.md
+
+# Logs
+*.log
+logs/
+app.log
+
+# Test files
+**/test/
+**/*Test.java
+**/*Tests.java
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker files (no need to copy these into the image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+
+# Maven wrapper (already in image)
+.mvn/wrapper/maven-wrapper.jar
+
+# Temporary files
+tmp/
+temp/
+*.tmp
