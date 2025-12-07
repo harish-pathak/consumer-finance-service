@@ -1,5 +1,8 @@
 package com.infobeans.consumerfinance.domain.embedded;
 
+import com.infobeans.consumerfinance.converter.EncryptedFieldConverter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,9 +28,17 @@ import java.math.BigDecimal;
 @Builder
 public class IncomeDetails {
 
+    @Column(name = "monthly_income", precision = 15, scale = 2)
     private BigDecimal monthlyIncome;
+
+    @Column(name = "annual_income", precision = 15, scale = 2)
     private BigDecimal annualIncome;
+
+    @Column(name = "income_source", length = 500)
+    @Convert(converter = EncryptedFieldConverter.class)
     private String incomeSource;  // SALARY, BUSINESS, RENT, etc.
+
+    @Column(name = "currency", length = 10)
     private String currency;      // USD, EUR, INR, etc.
 
     @Override

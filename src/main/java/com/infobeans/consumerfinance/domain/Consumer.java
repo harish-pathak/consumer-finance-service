@@ -96,8 +96,8 @@ public class Consumer {
      * National ID or government-issued identifier (ENCRYPTED).
      * Unique to detect duplicate registrations.
      */
-    @Column(name = "national_id", unique = true, length = 255)
-    // @Convert(converter = EncryptedFieldConverter.class)  // Encryption disabled for now - causing encoding issues
+    @Column(name = "national_id", unique = true, length = 500)
+    @Convert(converter = EncryptedFieldConverter.class)
     private String nationalId;
 
     /**
@@ -109,8 +109,8 @@ public class Consumer {
     /**
      * Identity document number (ENCRYPTED).
      */
-    @Column(name = "document_number", unique = true, length = 255)
-    // @Convert(converter = EncryptedFieldConverter.class)  // Encryption disabled for now - causing encoding issues
+    @Column(name = "document_number", unique = true, length = 500)
+    @Convert(converter = EncryptedFieldConverter.class)
     private String documentNumber;
 
     // ==================== EMPLOYMENT INFORMATION (EMBEDDED) ====================

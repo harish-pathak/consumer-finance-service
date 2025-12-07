@@ -1,0 +1,31 @@
+# Test Configuration
+# Disables OAuth2 and Flyway for unit tests
+
+spring:
+  # Flyway Configuration (Disabled for Tests)
+  flyway:
+    enabled: false
+
+  # Security Configuration
+  security:
+    # Disable OAuth2 for tests
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: # Empty to disable OAuth2 in tests
+
+    # JWT Configuration (for deprecated components used in tests)
+    jwt:
+      secret: test-secret-key-for-jwt-token-generation-and-validation-minimum-256-bits
+      expiration: 3600000 # 1 hour in milliseconds
+
+    # User credentials for tests
+    user:
+      username: testuser
+      password: testpass
+
+# Logging Configuration
+logging:
+  level:
+    root: WARN
+    com.infobeans.consumerfinance: INFO
