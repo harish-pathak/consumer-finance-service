@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  mysql:
+    image: mysql:8.0
+    container_name: consumer-finance-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-consumer_finance}
+      MYSQL_USER: ${MYSQL_USER:-financeuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-financepass}
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Consumer Finance Application Service
+  app:
+    image: ghcr.io/harish-pathak/consumer-finance-service:latest
+    container_name: consumer-finance-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # Spring Boot Configuration
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-consumer_finance}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-financeuser}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-financepass}
+
+      # Flyway Configuration
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: true
+
+      # Encryption Configuration
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-defaultEncryptionKey1234567890123456}
+
+      # OAuth2 Configuration
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${OAUTH2_ISSUER_URI:-https://dev-dummy.auth0.com/}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${OAUTH2_JWK_SET_URI:-https://dev-dummy.auth0.com/.well-known/jwks.json}
+
+      # Application Configuration
+      SERVER_PORT: 8080
+      LOGGING_LEVEL_ROOT: ${LOG_LEVEL:-INFO}
+      LOGGING_LEVEL_COM_INFOBEANS: ${APP_LOG_LEVEL:-DEBUG}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - app-logs:/app/logs
+
+networks:
+  finance-network:
+    driver: bridge
+    name: consumer-finance-network
+
+volumes:
+  mysql-data:
+    driver: local
+    name: consumer-finance-mysql-data
+  app-logs:
+    driver: local
+    name: consumer-finance-app-logs
