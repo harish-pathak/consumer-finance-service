@@ -1,5 +1,8 @@
 package com.infobeans.consumerfinance.domain.embedded;
 
+import com.infobeans.consumerfinance.converter.EncryptedFieldConverter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,10 +26,20 @@ import lombok.NoArgsConstructor;
 @Builder
 public class EmploymentDetails {
 
+    @Column(name = "employer_name", length = 500)
+    @Convert(converter = EncryptedFieldConverter.class)
     private String employerName;
+
+    @Column(name = "employment_type", length = 50)
     private String employmentType;  // FULL_TIME, PART_TIME, SELF_EMPLOYED, etc.
+
+    @Column(name = "position", length = 100)
     private String position;
+
+    @Column(name = "industry", length = 100)
     private String industry;
+
+    @Column(name = "years_of_experience")
     private Long yearsOfExperience;
 
     @Override

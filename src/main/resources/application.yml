@@ -3,12 +3,23 @@ spring:
     name: consumer-finance-service
 
   security:
-    jwt:
-      secret: ${JWT_SECRET:your-super-secret-key-change-in-production-minimum-256-bits-long-for-security}
-      expiration: ${JWT_EXPIRATION:3600000}  # 1 hour in milliseconds
-    user:
-      username: ${APP_USER:admin}
-      password: ${APP_PASSWORD:admin123}
+    # OAuth2 Resource Server Configuration (Auth0)
+    oauth2:
+      resourceserver:
+        jwt:
+          # Auth0 Issuer URI
+          issuer-uri: ${AUTH0_ISSUER_URI:https://dev-nhmhs0r5umunbtao.us.auth0.com/}
+          # JWK Set URI for token validation (auto-configured from issuer-uri)
+          # jwk-set-uri: ${AUTH0_ISSUER_URI:https://YOUR_AUTH0_DOMAIN.auth0.com/}/.well-known/jwks.json
+
+    # DEPRECATED: Custom JWT Configuration - Replaced by OAuth2
+    # Keeping for reference during migration, will be removed in future release
+    # jwt:
+    #   secret: ${JWT_SECRET:your-super-secret-key-change-in-production-minimum-256-bits-long-for-security}
+    #   expiration: ${JWT_EXPIRATION:3600000}  # 1 hour in milliseconds
+    # user:
+    #   username: ${APP_USER:admin}
+    #   password: ${APP_PASSWORD:admin123}
 
   datasource:
     url: jdbc:mysql://localhost:3306/consumer_finance?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true

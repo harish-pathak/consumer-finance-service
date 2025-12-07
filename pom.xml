@@ -52,7 +52,15 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- JJWT - JWT Token Generation and Validation -->
+        <!-- OAuth2 Resource Server - Auth0 Integration -->
+        <!-- Includes JWT support automatically -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- DEPRECATED: Custom JJWT - Replaced by OAuth2 Resource Server -->
+        <!-- Keeping for backward compatibility during migration, will be removed in future release -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -141,6 +149,13 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- H2 Database for Testing -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
 
