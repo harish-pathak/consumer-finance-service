@@ -349,20 +349,18 @@ class LoanDecisionServiceImplTest {
             .reason("Income verified")
             .build();
 
-        // First check: duplicate doesn't exist yet
+        // First check: duplicate doesn't exist yet, then exists after race condition
         when(loanApplicationRepository.findById(testApplicationId)).thenReturn(Optional.of(pendingApplication));
         when(loanApplicationDecisionRepository.existsByApplicationIdAndDecision(
-            testApplicationId, LoanDecisionStatus.APPROVED)).thenReturn(false);
+            testApplicationId, LoanDecisionStatus.APPROVED))
+            .thenReturn(false)  // First check: no duplicate
+            .thenReturn(true);  // Re-check after race condition: duplicate now exists
 
         // Then save fails with DataIntegrityViolationException
         when(loanApplicationDecisionRepository.save(any(LoanApplicationDecision.class)))
             .thenThrow(new DataIntegrityViolationException("Duplicate entry for application_id, decision"));
 
-        // Re-check after race condition: duplicate now exists
-        when(loanApplicationDecisionRepository.existsByApplicationIdAndDecision(
-            testApplicationId, LoanDecisionStatus.APPROVED))
-            .thenReturn(true)
-            .thenReturn(true);  // Subsequent calls also return true
+        // After race condition: duplicate exists
         when(loanApplicationDecisionRepository.findByApplicationIdAndDecision(
             testApplicationId, LoanDecisionStatus.APPROVED)).thenReturn(Optional.of(approvalDecision));
 

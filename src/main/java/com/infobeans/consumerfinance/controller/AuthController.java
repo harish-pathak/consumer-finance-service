@@ -20,20 +20,32 @@ import org.springframework.web.bind.annotation.RestController;
  * Handles JWT token generation for authorized users.
  *
  * Public Endpoint: POST /api/v1/auth/login
+ *
+ * @deprecated This custom authentication endpoint is replaced by Auth0 OAuth2.
+ *             Application now uses Auth0 for user authentication and token generation.
+ *             This controller is kept for reference only and will be removed in a future release.
+ *
+ *             To authenticate:
+ *             1. Use Auth0's authentication endpoints (e.g., /oauth/token)
+ *             2. Obtain access_token from Auth0
+ *             3. Use token in Authorization: Bearer <token> header
+ *
+ *             See AUTH0_SETUP.md for configuration instructions.
  */
+@Deprecated(since = "5.0", forRemoval = true)
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication", description = "JWT Authentication endpoints")
+@Tag(name = "Authentication (Deprecated)", description = "DEPRECATED: Use Auth0 OAuth2 for authentication")
 @Slf4j
 public class AuthController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    @Value("${spring.security.user.username}")
+    @Value("${spring.security.user.username:admin}")
     private String appUsername;
 
-    @Value("${spring.security.user.password}")
+    @Value("${spring.security.user.password:admin123}")
     private String appPassword;
 
     /**
