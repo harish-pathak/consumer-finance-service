@@ -15,15 +15,21 @@ import java.util.Date;
 /**
  * JWT Token Provider for generating and validating JWT tokens.
  * Uses HMAC-SHA256 algorithm for signing.
+ *
+ * @deprecated This custom JWT token provider is replaced by Spring Security OAuth2 Resource Server.
+ *             Application now uses Auth0 for token generation and validation.
+ *             This class is kept for reference only and will be removed in a future release.
+ *             Auth0 handles token generation, signature, and validation automatically.
  */
+@Deprecated(since = "5.0", forRemoval = true)
 @Component
 @Slf4j
 public class JwtTokenProvider {
 
-    @Value("${spring.security.jwt.secret}")
+    @Value("${spring.security.jwt.secret:deprecated-jwt-secret-for-backward-compatibility-only-minimum-256-bits}")
     private String jwtSecret;
 
-    @Value("${spring.security.jwt.expiration}")
+    @Value("${spring.security.jwt.expiration:3600000}")
     private long jwtExpirationMs;
 
     /**
