@@ -50,8 +50,8 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-defaultEncryptionKey1234567890123456}
 
       # OAuth2 Configuration
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${OAUTH2_ISSUER_URI:-https://dev-dummy.auth0.com/}
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${OAUTH2_JWK_SET_URI:-https://dev-dummy.auth0.com/.well-known/jwks.json}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${OAUTH2_ISSUER_URI:-https://dev-nhmhs0r5umunbtao.us.auth0.com/}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${OAUTH2_JWK_SET_URI:-https://dev-nhmhs0r5umunbtao.us.auth0.com/.well-known/jwks.json}
 
       # Application Configuration
       SERVER_PORT: 8080
