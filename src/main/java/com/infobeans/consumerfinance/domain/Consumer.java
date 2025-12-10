@@ -113,14 +113,6 @@ public class Consumer {
     @Convert(converter = EncryptedFieldConverter.class)
     private String documentNumber;
 
-    /**
-     * Indian PAN (Permanent Account Number).
-     * Format: ABCDE1234F (5 letters, 4 digits, 1 letter).
-     * Unique to detect duplicate registrations.
-     */
-    @Column(name = "pan_number", unique = true, length = 10)
-    private String panNumber;
-
     // ==================== EMPLOYMENT INFORMATION (EMBEDDED) ====================
 
     /**

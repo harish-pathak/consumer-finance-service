@@ -98,24 +98,6 @@ public interface ConsumerRepository extends JpaRepository<Consumer, String> {
     boolean existsByDocumentNumber(String documentNumber);
 
     /**
-     * Check if a consumer exists with the given PAN number.
-     * Optimized query for duplicate detection.
-     *
-     * @param panNumber the PAN number to check
-     * @return true if a consumer with this PAN number exists, false otherwise
-     */
-    boolean existsByPanNumber(String panNumber);
-
-    /**
-     * Find a consumer by PAN number.
-     * Used for PAN verification and duplicate detection.
-     *
-     * @param panNumber the PAN number to search for
-     * @return Optional containing the consumer if found
-     */
-    Optional<Consumer> findByPanNumber(String panNumber);
-
-    /**
      * Custom query to find consumers by email or phone number.
      * Used for flexible consumer lookup.
      *

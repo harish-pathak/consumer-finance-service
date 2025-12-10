@@ -69,7 +69,6 @@ class ConsumerControllerTest {
             .phone("+1234567890")
             .documentType("PASSPORT")
             .documentNumber("AB1234567")
-            .panNumber("ABCDE1234F")
             .employerName("ABC Corp")
             .position("Software Engineer")
             .employmentType("FULL_TIME")
@@ -278,87 +277,6 @@ class ConsumerControllerTest {
             .andExpect(status().isBadRequest());
 
         verify(consumerService, never()).onboardConsumer(any());
-    }
-
-    @Test
-    @WithMockUser
-    @DisplayName("POST /api/v1/consumers - Return 400 when PAN number is missing")
-    void testOnboardConsumer_ValidationError_MissingPanNumber() throws Exception {
-        // Arrange - request without PAN number
-        CreateConsumerOnboardingRequest invalidRequest = CreateConsumerOnboardingRequest.builder()
-            .email("john.doe@example.com")
-            .firstName("John")
-            .lastName("Doe")
-            .dateOfBirth(LocalDate.of(1990, 1, 15))
-            .nationalId("123456789012")
-            .phone("+1234567890")
-            .documentType("PASSPORT")
-            .documentNumber("AB1234567")
-            .panNumber(null) // Missing PAN number
-            .employerName("ABC Corp")
-            .build();
-
-        // Act & Assert
-        mockMvc.perform(post("/api/v1/consumers")
-            .header("Authorization", "Bearer " + validJwt)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(invalidRequest)))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error", is("Validation Error")))
-            .andExpect(jsonPath("$.message", containsString("validation failed")));
-
-        verify(consumerService, never()).onboardConsumer(any());
-    }
-
-    @Test
-    @WithMockUser
-    @DisplayName("POST /api/v1/consumers - Return 400 when PAN number format is invalid")
-    void testOnboardConsumer_ValidationError_InvalidPanFormat() throws Exception {
-        // Arrange - request with invalid PAN format
-        CreateConsumerOnboardingRequest invalidRequest = CreateConsumerOnboardingRequest.builder()
-            .email("john.doe@example.com")
-            .firstName("John")
-            .lastName("Doe")
-            .dateOfBirth(LocalDate.of(1990, 1, 15))
-            .nationalId("123456789012")
-            .phone("+1234567890")
-            .documentType("PASSPORT")
-            .documentNumber("AB1234567")
-            .panNumber("INVALID123") // Invalid format (not matching ABCDE1234F pattern)
-            .employerName("ABC Corp")
-            .build();
-
-        // Act & Assert
-        mockMvc.perform(post("/api/v1/consumers")
-            .header("Authorization", "Bearer " + validJwt)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(invalidRequest)))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error", is("Validation Error")))
-            .andExpect(jsonPath("$.details", containsString("PAN")));
-
-        verify(consumerService, never()).onboardConsumer(any());
-    }
-
-    @Test
-    @WithMockUser
-    @DisplayName("POST /api/v1/consumers - Return 409 when PAN number already exists")
-    void testOnboardConsumer_DuplicatePanNumber() throws Exception {
-        // Arrange
-        when(consumerService.onboardConsumer(any()))
-            .thenThrow(new DuplicateResourceException(
-                "A consumer with PAN number '" + validRequest.getPanNumber() + "' already exists"));
-
-        // Act & Assert
-        mockMvc.perform(post("/api/v1/consumers")
-            .header("Authorization", "Bearer " + validJwt)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(validRequest)))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.error", is("Duplicate Resource")))
-            .andExpect(jsonPath("$.message", containsString("PAN number")));
-
-        verify(consumerService).onboardConsumer(any());
     }
 
     @Test

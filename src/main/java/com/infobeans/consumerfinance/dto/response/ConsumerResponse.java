@@ -34,7 +34,6 @@ public class ConsumerResponse {
     private String email;
     private String phone;
     private String nationalId; // Masked for security
-    private String panNumber; // Masked for security (show only last 4 chars)
 
     // Employment Details
     private String employerName;

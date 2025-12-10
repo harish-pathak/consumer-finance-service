@@ -87,14 +87,6 @@ public class ConsumerServiceImpl implements ConsumerService {
             }
         }
 
-        // Check for duplicate PAN number (mandatory field)
-        if (consumerRepository.existsByPanNumber(request.getPanNumber())) {
-            log.warn("Duplicate PAN number detected during onboarding: {}", request.getPanNumber());
-            throw new DuplicateResourceException(
-                "A consumer with PAN number '" + request.getPanNumber() + "' already exists. Please verify the PAN number and try again."
-            );
-        }
-
         // Create consumer entity from request
         Consumer consumer = buildConsumerFromRequest(request);
 
@@ -189,7 +181,6 @@ public class ConsumerServiceImpl implements ConsumerService {
             .nationalId(request.getNationalId())
             .documentType(request.getDocumentType())
             .documentNumber(request.getDocumentNumber())
-            .panNumber(request.getPanNumber())
             // Employment
             .employmentDetails(employmentDetails)
             // Financial

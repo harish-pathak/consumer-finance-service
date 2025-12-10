@@ -2,7 +2,6 @@ package com.infobeans.consumerfinance.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.infobeans.consumerfinance.validation.PAN;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -109,16 +108,6 @@ public class CreateConsumerOnboardingRequest {
      */
     @Size(max = 100, message = "Document number must not exceed 100 characters")
     private String documentNumber;
-
-    /**
-     * Indian PAN (Permanent Account Number).
-     * Required field. Must be unique to detect duplicate registrations.
-     * Format: ABCDE1234F (5 letters, 4 digits, 1 letter).
-     * Example values: ABCDE1234F, XYZPA5678B
-     */
-    @NotBlank(message = "PAN number is required")
-    @PAN(message = "PAN number must be exactly 10 characters in format ABCDE1234F (5 letters, 4 digits, 1 letter)")
-    private String panNumber;
 
     // ==================== EMPLOYMENT INFORMATION ====================
 
