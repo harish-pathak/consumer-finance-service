@@ -86,7 +86,7 @@ public class VendorLinkedAccount {
      * Possible states: ACTIVE, DISABLED, ARCHIVED
      * Default: ACTIVE
      */
-    @Column(name = "status", nullable = false, length = 50)
+    @Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
 

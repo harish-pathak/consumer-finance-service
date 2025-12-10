@@ -42,7 +42,7 @@ public class Vendor {
     @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
     private VendorStatus status;
 

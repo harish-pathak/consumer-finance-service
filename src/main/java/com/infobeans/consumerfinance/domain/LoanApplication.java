@@ -47,7 +47,7 @@ public class LoanApplication {
     @Column(name = "consumer_id", nullable = false, columnDefinition = "VARCHAR(36)", length = 36)
     private String consumerId;
 
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
     private LoanApplicationStatus status;
 

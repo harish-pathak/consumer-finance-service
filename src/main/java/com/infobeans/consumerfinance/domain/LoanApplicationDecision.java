@@ -84,7 +84,7 @@ public class LoanApplicationDecision {
      * Unique Constraint: Composite with application_id prevents duplicate decisions
      * (only one APPROVED and one REJECTED per application, enforced by DB).
      */
-    @Column(name = "decision", nullable = false, length = 20)
+    @Column(name = "decision", nullable = false, columnDefinition = "ENUM('APPROVED', 'REJECTED')")
     @Enumerated(EnumType.STRING)
     private LoanDecisionStatus decision;
 
