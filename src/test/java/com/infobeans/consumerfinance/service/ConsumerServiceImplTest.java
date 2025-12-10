@@ -54,6 +54,7 @@ class ConsumerServiceImplTest {
         when(consumerRepository.existsByNationalId(validRequest.getNationalId())).thenReturn(false);
         when(consumerRepository.existsByPhone(validRequest.getPhone())).thenReturn(false);
         when(consumerRepository.existsByDocumentNumber(validRequest.getDocumentNumber())).thenReturn(false);
+        when(consumerRepository.existsByPanNumber(validRequest.getPanNumber())).thenReturn(false);
 
         Consumer savedConsumer = new Consumer();
         savedConsumer.setId("test-id-123");
@@ -74,6 +75,7 @@ class ConsumerServiceImplTest {
         verify(consumerRepository).existsByNationalId(validRequest.getNationalId());
         verify(consumerRepository).existsByPhone(validRequest.getPhone());
         verify(consumerRepository).existsByDocumentNumber(validRequest.getDocumentNumber());
+        verify(consumerRepository).existsByPanNumber(validRequest.getPanNumber());
         verify(consumerRepository).save(any(Consumer.class));
         verify(eventPublisher).publishEvent(any());
     }
@@ -154,6 +156,27 @@ class ConsumerServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should throw exception when PAN number already exists")
+    void testOnboardConsumer_DuplicatePanNumber() {
+        // Arrange
+        when(consumerRepository.existsByEmail(validRequest.getEmail())).thenReturn(false);
+        when(consumerRepository.existsByNationalId(validRequest.getNationalId())).thenReturn(false);
+        when(consumerRepository.existsByPhone(validRequest.getPhone())).thenReturn(false);
+        when(consumerRepository.existsByDocumentNumber(validRequest.getDocumentNumber())).thenReturn(false);
+        when(consumerRepository.existsByPanNumber(validRequest.getPanNumber())).thenReturn(true);
+
+        // Act & Assert
+        DuplicateResourceException exception = assertThrows(
+                DuplicateResourceException.class,
+                () -> consumerService.onboardConsumer(validRequest)
+        );
+
+        assertTrue(exception.getMessage().contains(validRequest.getPanNumber()));
+        assertTrue(exception.getMessage().contains("PAN number"));
+        verify(consumerRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("Should handle null phone number (optional field)")
     void testOnboardConsumer_NullPhone() {
         // Arrange
@@ -161,6 +184,7 @@ class ConsumerServiceImplTest {
         when(consumerRepository.existsByEmail(validRequest.getEmail())).thenReturn(false);
         when(consumerRepository.existsByNationalId(validRequest.getNationalId())).thenReturn(false);
         when(consumerRepository.existsByDocumentNumber(validRequest.getDocumentNumber())).thenReturn(false);
+        when(consumerRepository.existsByPanNumber(validRequest.getPanNumber())).thenReturn(false);
 
         Consumer savedConsumer = new Consumer();
         savedConsumer.setId("test-id-456");
@@ -185,6 +209,7 @@ class ConsumerServiceImplTest {
         when(consumerRepository.existsByEmail(validRequest.getEmail())).thenReturn(false);
         when(consumerRepository.existsByNationalId(validRequest.getNationalId())).thenReturn(false);
         when(consumerRepository.existsByDocumentNumber(validRequest.getDocumentNumber())).thenReturn(false);
+        when(consumerRepository.existsByPanNumber(validRequest.getPanNumber())).thenReturn(false);
 
         Consumer savedConsumer = new Consumer();
         savedConsumer.setId("test-id-789");
@@ -222,6 +247,7 @@ class ConsumerServiceImplTest {
         when(consumerRepository.existsByNationalId(validRequest.getNationalId())).thenReturn(false);
         when(consumerRepository.existsByPhone(validRequest.getPhone())).thenReturn(false);
         when(consumerRepository.existsByDocumentNumber(validRequest.getDocumentNumber())).thenReturn(false);
+        when(consumerRepository.existsByPanNumber(validRequest.getPanNumber())).thenReturn(false);
 
         Consumer savedConsumer = new Consumer();
         savedConsumer.setId("test-id-all");
@@ -236,6 +262,7 @@ class ConsumerServiceImplTest {
         inOrder.verify(consumerRepository).existsByNationalId(validRequest.getNationalId());
         inOrder.verify(consumerRepository).existsByPhone(validRequest.getPhone());
         inOrder.verify(consumerRepository).existsByDocumentNumber(validRequest.getDocumentNumber());
+        inOrder.verify(consumerRepository).existsByPanNumber(validRequest.getPanNumber());
         inOrder.verify(consumerRepository).save(any());
     }
 
@@ -250,6 +277,7 @@ class ConsumerServiceImplTest {
                 .nationalId("123-45-6789")
                 .documentType("NATIONAL_ID")
                 .documentNumber("ID123456789")
+                .panNumber("ABCDE1234F")
                 .employerName("Tech Company")
                 .position("Senior Engineer")
                 .employmentType("FULL_TIME")
